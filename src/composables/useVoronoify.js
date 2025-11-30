@@ -19,6 +19,8 @@ export function useVoronoify() {
   const multiSelectedIds = ref(new Set())
   const hoveredSiteId = ref(null)
   const isErasing = ref(false)
+  const movingSiteId = ref(null)
+  const moveOffset = ref({ x: 0, y: 0 })
   const isSelectingBox = ref(false)
   const selectionStart = ref({ x: 0, y: 0 })
   const selectionEnd = ref({ x: 0, y: 0 })
@@ -68,6 +70,11 @@ export function useVoronoify() {
     if (isPanning.value) return 'cursor-grabbing'
     if (activeTool.value === 'select') {
       if (isSelectingBox.value) return 'cursor-crosshair'
+      if (hoveredSiteId.value) return 'cursor-pointer'
+      return 'cursor-default'
+    }
+    if (activeTool.value === 'move') {
+      if (movingSiteId.value) return 'cursor-grabbing'
       if (hoveredSiteId.value) return 'cursor-pointer'
       return 'cursor-default'
     }
@@ -317,7 +324,7 @@ export function useVoronoify() {
       suppressNextClick.value = false
       return
     }
-    if (!canvasRef.value || didPan.value || isSelectingBox.value) return
+    if (!canvasRef.value || didPan.value || isSelectingBox.value || activeTool.value === 'move') return
 
     const rect = canvasRef.value.getBoundingClientRect()
     const x = event.clientX - rect.left
@@ -596,6 +603,22 @@ export function useVoronoify() {
       return
     }
 
+    if (activeTool.value === 'move' && isLeft) {
+      if (rect && x !== null && y !== null) {
+        const hit = hitTestSite(x, y)
+        if (hit) {
+          movingSiteId.value = hit
+          const site = sites.value.find((s) => s.id === hit)
+          if (site) {
+            const world = screenToWorld(x, y)
+            moveOffset.value = { x: site.x - world.x, y: site.y - world.y }
+          }
+          event.preventDefault()
+          return
+        }
+      }
+    }
+
     if (activeTool.value === 'select' && isLeft && event.shiftKey) {
       if (rect && x !== null && y !== null) {
         const hit = hitTestSite(x, y)
@@ -623,6 +646,7 @@ export function useVoronoify() {
     const canPan =
       isMiddle ||
       (activeTool.value === 'select' && isLeft && !event.shiftKey && !hitAtPointer) ||
+      (activeTool.value === 'move' && isMiddle) ||
       (activeTool.value === 'sites' && isMiddle) ||
       (activeTool.value === 'paint-delete' && isMiddle)
 
@@ -641,10 +665,20 @@ export function useVoronoify() {
       const x = event.clientX - rect.left
       const y = event.clientY - rect.top
       cursorWorld.value = screenToWorld(x, y)
-      if (!isPanning.value && activeTool.value === 'select') {
+      if (!isPanning.value && (activeTool.value === 'select' || activeTool.value === 'move')) {
         hoveredSiteId.value = hitTestSite(x, y, 14)
       } else if (!isPanning.value) {
         hoveredSiteId.value = null
+      }
+      if (movingSiteId.value && activeTool.value === 'move') {
+        const site = sites.value.find((s) => s.id === movingSiteId.value)
+        if (site) {
+          const world = screenToWorld(x, y)
+          site.x = world.x + moveOffset.value.x
+          site.y = world.y + moveOffset.value.y
+          draw()
+          return
+        }
       }
       if (isSelectingBox.value && activeTool.value === 'select') {
         if (!event.shiftKey) {
@@ -688,6 +722,9 @@ export function useVoronoify() {
     if (isErasing.value) {
       isErasing.value = false
     }
+    if (movingSiteId.value) {
+      movingSiteId.value = null
+    }
     if (isSelectingBox.value) {
       isSelectingBox.value = false
       if (multiSelectedIds.value.size === 1) {
@@ -717,6 +754,9 @@ export function useVoronoify() {
       hoveredSiteId.value = null
       multiSelectedIds.value = new Set()
       isSelectingBox.value = false
+    }
+    if (tool !== 'move') {
+      movingSiteId.value = null
     }
   }
 
@@ -811,6 +851,8 @@ export function useVoronoify() {
     selectionEnd,
     selectionBackup,
     suppressNextClick,
+    movingSiteId,
+    moveOffset,
     imageBitmap,
     imageSize,
     styleOptions,
@@ -838,5 +880,7 @@ export function useVoronoify() {
     deleteMultiSelected,
     colorWithAlpha,
     closePopovers,
+    movingSiteId,
+    moveOffset,
   }
 }

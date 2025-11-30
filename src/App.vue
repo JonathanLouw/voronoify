@@ -147,6 +147,9 @@
           <template #delete-icon>
             <MapPinMinus class="h-5 w-5" />
           </template>
+          <template #move-icon>
+            <Move class="h-5 w-5" />
+          </template>
           <template #select-icon>
             <MousePointerClick class="h-5 w-5" />
           </template>
@@ -209,7 +212,7 @@
 </template>
 
 <script setup>
-import { Crosshair, Download, MapPinMinus, MapPinPlus, MousePointerClick, Settings, Trash2, Undo2 } from 'lucide-vue-next'
+import { Crosshair, Download, MapPinMinus, MapPinPlus, MousePointerClick, Move, Settings, Trash2, Undo2 } from 'lucide-vue-next'
 import BottomToolbar from './components/BottomToolbar.vue'
 import ExportMenu from './components/ExportMenu.vue'
 import OptionsPopover from './components/OptionsPopover.vue'
@@ -246,5 +249,7 @@ const {
   exportSitesJson,
   exportImageFile,
   closePopovers,
+  movingSiteId,
+  moveOffset,
 } = useVoronoify()
 </script>
