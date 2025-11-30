@@ -10,3 +10,5 @@ Voronoify is a lightweight, client-side playground for dropping points on top of
 - Export the point data as JSON or save a PNG with the Voronoi overlay sized to your image.
 
 Try it here: https://jonathanlouw.github.io/voronoify/
+
+> Provided as-is, without warranty. Use at your own risk (including any engineering, mapping, or planning work).
