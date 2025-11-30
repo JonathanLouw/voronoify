@@ -7,5 +7,8 @@ export default defineConfig({
     tailwindcss(),
     vue(), 
   ],
-  base: '/voronoify/'
+  base: '/voronoify/',
+  build: {
+    outDir: './docs'
+  }
 })
